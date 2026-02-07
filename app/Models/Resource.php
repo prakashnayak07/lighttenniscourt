@@ -2,12 +2,14 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Resource extends Model
 {
+    use BelongsToOrganization;
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -30,11 +32,6 @@ class Resource extends Model
             'has_lighting' => 'boolean',
             'created_at' => 'datetime',
         ];
-    }
-
-    public function organization(): BelongsTo
-    {
-        return $this->belongsTo(Organization::class);
     }
 
     public function bookings(): HasMany

@@ -2,11 +2,13 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\BelongsToOrganization;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class Coupon extends Model
 {
+    use BelongsToOrganization;
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -24,10 +26,5 @@ class Coupon extends Model
         return [
             'valid_until' => 'datetime',
         ];
-    }
-
-    public function organization(): BelongsTo
-    {
-        return $this->belongsTo(Organization::class);
     }
 }

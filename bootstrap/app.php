@@ -16,10 +16,16 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->encryptCookies(except: ['appearance', 'sidebar_state']);
 
+        $middleware->alias([
+            'org.context' => \App\Http\Middleware\SetOrganizationContext::class,
+            'org.check' => \App\Http\Middleware\EnsureUserBelongsToOrganization::class,
+        ]);
+
         $middleware->web(append: [
             HandleAppearance::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\SetOrganizationContext::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
