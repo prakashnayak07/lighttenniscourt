@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('bookings', function (Blueprint $table) {
-            $table->string('access_code', 50)->nullable()->unique()->after('payment_intent_id');
+            $table->string('access_code', 50)->nullable()->unique()->after('payment_status');
             $table->timestamp('access_code_used_at')->nullable()->after('access_code');
         });
     }

@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\BookingResource\Pages;
 use App\Models\Booking;
+use Filament\Actions;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
 use Filament\Tables\Table;
@@ -114,14 +115,14 @@ class BookingResource extends Resource
                     }),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\Action::make('confirm')
+                Actions\EditAction::make(),
+                Actions\Action::make('confirm')
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
                     ->action(fn(Booking $record) => $record->update(['status' => 'confirmed']))
                     ->visible(fn(Booking $record) => $record->status === 'pending'),
-                Tables\Actions\Action::make('cancel')
+                Actions\Action::make('cancel')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
@@ -129,8 +130,8 @@ class BookingResource extends Resource
                     ->visible(fn(Booking $record) => in_array($record->status, ['pending', 'confirmed'])),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

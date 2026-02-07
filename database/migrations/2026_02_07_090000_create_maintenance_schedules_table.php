@@ -22,7 +22,7 @@ return new class extends Migration
             $table->text('notes')->nullable();
             $table->timestamps();
 
-            $table->index(['resource_id', 'start_datetime', 'end_datetime']);
+            $table->index(['resource_id', 'start_datetime', 'end_datetime'], 'ms_resource_start_end_idx');
         });
     }
 

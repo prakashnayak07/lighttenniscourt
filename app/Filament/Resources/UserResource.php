@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
 use App\Models\User;
+use Filament\Actions;
 use App\Enums\UserRole;
 use App\Enums\UserStatus;
 use Filament\Forms;
@@ -84,14 +85,14 @@ class UserResource extends Resource
                 Tables\Columns\TextColumn::make('email')
                     ->searchable(),
                 Tables\Columns\BadgeColumn::make('role')
-                    ->formatStateUsing(fn ($state) => $state->getLabel()),
+                    ->formatStateUsing(fn ($state) => $state->label()),
                 Tables\Columns\BadgeColumn::make('status')
                     ->colors([
                         'success' => UserStatus::Active->value,
                         'warning' => UserStatus::Pending->value,
                         'danger' => UserStatus::Banned->value,
                     ])
-                    ->formatStateUsing(fn ($state) => $state->getLabel()),
+                    ->formatStateUsing(fn ($state) => $state->label()),
                 Tables\Columns\TextColumn::make('organization.name')
                     ->visible(fn () => auth()->user()->isSuperAdmin()),
             ])
@@ -113,11 +114,11 @@ class UserResource extends Resource
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
+                Actions\EditAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ]);
     }

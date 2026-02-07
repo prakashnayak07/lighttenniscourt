@@ -6,6 +6,7 @@ use App\Filament\Resources\MaintenanceScheduleResource\Pages;
 use App\Models\MaintenanceSchedule;
 use App\Models\Resource;
 use App\Models\User;
+use Filament\Actions;
 use Filament\Forms;
 use Filament\Schemas\Schema;
 use Filament\Resources\Resource as FilamentResource;
@@ -148,12 +149,12 @@ class MaintenanceScheduleResource extends FilamentResource
                     ]),
             ])
             ->actions([
-                Tables\Actions\EditAction::make(),
-                Tables\Actions\DeleteAction::make(),
+                Actions\EditAction::make(),
+                Actions\DeleteAction::make(),
             ])
             ->bulkActions([
-                Tables\Actions\BulkActionGroup::make([
-                    Tables\Actions\DeleteBulkAction::make(),
+                Actions\BulkActionGroup::make([
+                    Actions\DeleteBulkAction::make(),
                 ]),
             ])
             ->defaultSort('start_datetime', 'desc');
