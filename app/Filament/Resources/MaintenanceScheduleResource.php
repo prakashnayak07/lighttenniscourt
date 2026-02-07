@@ -7,7 +7,7 @@ use App\Models\MaintenanceSchedule;
 use App\Models\Resource;
 use App\Models\User;
 use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource as FilamentResource;
 use Filament\Tables;
 use Filament\Tables\Table;
@@ -16,15 +16,15 @@ class MaintenanceScheduleResource extends FilamentResource
 {
     protected static ?string $model = MaintenanceSchedule::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-wrench-screwdriver';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
-    protected static $navigationGroup = 'Management';
+    protected static string|\UnitEnum|null $navigationGroup = 'Management';
 
     protected static ?int $navigationSort = 4;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\Select::make('resource_id')
                     ->label('Court')

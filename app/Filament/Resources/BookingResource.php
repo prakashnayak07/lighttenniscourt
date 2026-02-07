@@ -4,25 +4,25 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\BookingResource\Pages;
 use App\Models\Booking;
-use Filament\Forms;
-use Filament\Forms\Form;
+use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
-use Filament\Tables;
 use Filament\Tables\Table;
+use Filament\Forms;
+use Filament\Tables;
 
 class BookingResource extends Resource
 {
     protected static ?string $model = Booking::class;
 
-    protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
+    protected static string|\BackedEnum|null $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static $navigationGroup = 'Management';
+    protected static string|\UnitEnum|null $navigationGroup = 'Management';
 
     protected static ?int $navigationSort = 4;
 
-    public static function form(Form $form): Form
+    public static function form(Schema $schema): Schema
     {
-        return $form
+        return $schema
             ->schema([
                 Forms\Components\Select::make('user_id')
                     ->relationship('user', 'email')
@@ -109,8 +109,8 @@ class BookingResource extends Resource
                     ])
                     ->query(function ($query, array $data) {
                         return $query
-                            ->when($data['from'], fn ($q) => $q->whereDate('date', '>=', $data['from']))
-                            ->when($data['until'], fn ($q) => $q->whereDate('date', '<=', $data['until']));
+                            ->when($data['from'], fn($q) => $q->whereDate('date', '>=', $data['from']))
+                            ->when($data['until'], fn($q) => $q->whereDate('date', '<=', $data['until']));
                     }),
             ])
             ->actions([
@@ -119,14 +119,14 @@ class BookingResource extends Resource
                     ->icon('heroicon-o-check-circle')
                     ->color('success')
                     ->requiresConfirmation()
-                    ->action(fn (Booking $record) => $record->update(['status' => 'confirmed']))
-                    ->visible(fn (Booking $record) => $record->status === 'pending'),
+                    ->action(fn(Booking $record) => $record->update(['status' => 'confirmed']))
+                    ->visible(fn(Booking $record) => $record->status === 'pending'),
                 Tables\Actions\Action::make('cancel')
                     ->icon('heroicon-o-x-circle')
                     ->color('danger')
                     ->requiresConfirmation()
-                    ->action(fn (Booking $record) => app(\App\Services\BookingService::class)->cancelBooking($record))
-                    ->visible(fn (Booking $record) => in_array($record->status, ['pending', 'confirmed'])),
+                    ->action(fn(Booking $record) => app(\App\Services\BookingService::class)->cancelBooking($record))
+                    ->visible(fn(Booking $record) => in_array($record->status, ['pending', 'confirmed'])),
             ])
             ->bulkActions([
                 Tables\Actions\BulkActionGroup::make([

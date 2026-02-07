@@ -8,7 +8,7 @@ use Filament\Widgets\ChartWidget;
 
 class RevenueChartWidget extends ChartWidget
 {
-    protected static ?string $heading = 'Revenue (Last 30 Days)';
+    protected ?string $heading = 'Revenue (Last 30 Days)';
 
     protected static ?int $sort = 2;
 

@@ -8,7 +8,7 @@ use Filament\Widgets\ChartWidget;
 
 class PopularCourtsWidget extends ChartWidget
 {
-    protected static ?string $heading = 'Most Popular Courts';
+    protected ?string $heading = 'Most Popular Courts';
 
     protected static ?int $sort = 3;
 

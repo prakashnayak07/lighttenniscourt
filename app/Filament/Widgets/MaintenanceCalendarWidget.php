@@ -9,7 +9,7 @@ use Illuminate\Support\Collection;
 
 class MaintenanceCalendarWidget extends Widget
 {
-    protected static string $view = 'filament.widgets.maintenance-calendar-widget';
+    protected string $view = 'filament.widgets.maintenance-calendar-widget';
 
     protected int | string | array $columnSpan = 'full';
 
