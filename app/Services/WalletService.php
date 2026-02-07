@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Organization;
 use App\Models\User;
 use App\Models\UserWallet;
 use App\Models\WalletTransaction;
@@ -15,10 +16,19 @@ class WalletService
      */
     public function getOrCreateWallet(User $user): UserWallet
     {
+        $organizationId = $user->organization_id
+            ?? Organization::query()->value('id');
+
+        if ($organizationId === null) {
+            throw new \InvalidArgumentException(
+                'Cannot create wallet: user has no organization and no organizations exist. Create an organization and assign it to the user, or create an organization first.'
+            );
+        }
+
         return UserWallet::firstOrCreate(
             ['user_id' => $user->id],
             [
-                'organization_id' => $user->organization_id,
+                'organization_id' => $organizationId,
                 'balance_cents' => 0,
             ]
         );

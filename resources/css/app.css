@@ -1,6 +1,9 @@
 @import 'tailwindcss';
 
 @import 'tw-animate-css';
+/* DayFlow calendar: import its styles only in the component that renders the calendar,
+   e.g. import '@dayflow/core/dist/styles.css' at the top of that file, to avoid
+   conflicting with shadcn/Tailwind here. */
 
 @source '../views';
 @source '../../vendor/laravel/framework/src/Illuminate/Pagination/resources/views/*.blade.php';

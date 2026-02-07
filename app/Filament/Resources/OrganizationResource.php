@@ -4,12 +4,13 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrganizationResource\Pages;
 use App\Models\Organization;
+use Filament\Resources\Resource;
+use Filament\Schemas\Components\Section as SchemaSection;
+use Filament\Schemas\Schema;
+use Filament\Tables\Table;
 use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
-use Filament\Resources\Resource;
 use Filament\Tables;
-use Filament\Tables\Table;
 
 class OrganizationResource extends Resource
 {
@@ -30,24 +31,71 @@ class OrganizationResource extends Resource
     {
         return $schema
             ->schema([
-                Forms\Components\TextInput::make('name')
-                    ->required()
-                    ->maxLength(255),
-                Forms\Components\TextInput::make('slug')
-                    ->required()
-                    ->unique(ignoreRecord: true)
-                    ->maxLength(255),
-                Forms\Components\Select::make('status')
-                    ->options([
-                        'active' => 'Active',
-                        'inactive' => 'Inactive',
-                        'suspended' => 'Suspended',
+                SchemaSection::make('Profile')
+                    ->schema([
+                        Forms\Components\FileUpload::make('logo_url')
+                            ->label('Profile logo')
+                            ->image()
+                            ->disk('public')
+                            ->directory('organizations/logos')
+                            ->visibility('public')
+                            ->maxSize(2048)
+                            ->nullable(),
+                        Forms\Components\TextInput::make('name')
+                            ->label('Name')
+                            ->required()
+                            ->maxLength(255),
+                        Forms\Components\TextInput::make('website')
+                            ->label('Website')
+                            ->url()
+                            ->maxLength(255)
+                            ->nullable(),
+                        Forms\Components\TextInput::make('subdomain')
+                            ->label('Slug / Subdomain')
+                            ->unique(ignoreRecord: true)
+                            ->maxLength(64)
+                            ->placeholder('clubname.yoursaas.com')
+                            ->nullable(),
+                        Forms\Components\Select::make('currency')
+                            ->label('Currency')
+                            ->options([
+                                'USD' => 'USD - US Dollar',
+                                'EUR' => 'EUR - Euro',
+                                'GBP' => 'GBP - British Pound',
+                                'AUD' => 'AUD - Australian Dollar',
+                                'CAD' => 'CAD - Canadian Dollar',
+                                'CHF' => 'CHF - Swiss Franc',
+                                'JPY' => 'JPY - Japanese Yen',
+                            ])
+                            ->default('USD')
+                            ->searchable(),
+                        Forms\Components\Select::make('timezone')
+                            ->label('Timezone')
+                            ->options(collect(timezone_identifiers_list())->mapWithKeys(fn($tz) => [$tz => $tz]))
+                            ->searchable()
+                            ->default('UTC'),
+                        Forms\Components\Select::make('is_active')
+                            ->label('Status')
+                            ->options([
+                                1 => 'Active',
+                                0 => 'Inactive',
+                            ])
+                            ->required()
+                            ->default(1)
+                            ->native(false),
                     ])
-                    ->required()
-                    ->default('active'),
-                Forms\Components\KeyValue::make('settings')
-                    ->label('Settings (JSON)')
-                    ->nullable(),
+                    ->columns(1),
+                SchemaSection::make('Description')
+                    ->schema([
+                        Forms\Components\RichEditor::make('description')
+                            ->label('Description')
+                            ->nullable()
+                            ->columnSpanFull(),
+                        Forms\Components\KeyValue::make('settings')
+                            ->label('Settings (JSON)')
+                            ->helperText('Optional key-value pairs for club-specific config (e.g. opening hours, court rules, custom labels). Stored as JSON; no database changes needed for new keys.')
+                            ->nullable(),
+                    ]),
             ]);
     }
 
@@ -55,30 +103,48 @@ class OrganizationResource extends Resource
     {
         return $table
             ->columns([
+                Tables\Columns\ImageColumn::make('logo_url')
+                    ->label('Logo')
+                    ->getStateUsing(fn ($record) => $record->logo_url ? asset('storage/'.$record->logo_url) : null)
+                    ->circular()
+                    ->defaultImageUrl(fn ($record) => 'https://ui-avatars.com/api/?name='.urlencode($record->name ?? 'Org')),
                 Tables\Columns\TextColumn::make('name')
                     ->searchable()
                     ->sortable(),
-                Tables\Columns\TextColumn::make('slug')
+                Tables\Columns\TextColumn::make('subdomain')
+                    ->label('Slug')
                     ->searchable(),
-                Tables\Columns\BadgeColumn::make('status')
-                    ->colors([
-                        'success' => 'active',
-                        'warning' => 'inactive',
-                        'danger' => 'suspended',
-                    ]),
-                Tables\Columns\TextColumn::make('users_count')
-                    ->counts('users')
-                    ->label('Users'),
+                Tables\Columns\TextColumn::make('website')
+                    ->label('Website')
+                    ->limit(30)
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('currency')
+                    ->label('Currency')
+                    ->toggleable(),
+                Tables\Columns\TextColumn::make('timezone')
+                    ->label('Timezone')
+                    ->limit(20)
+                    ->toggleable(),
+                Tables\Columns\IconColumn::make('is_active')
+                    ->label('Status')
+                    ->boolean()
+                    ->trueIcon('heroicon-o-check-circle')
+                    ->falseIcon('heroicon-o-x-circle')
+                    ->trueColor('success')
+                    ->falseColor('danger'),
+                Tables\Columns\TextColumn::make('customers_count')
+                    ->counts('customers')
+                    ->label('Customers'),
                 Tables\Columns\TextColumn::make('created_at')
                     ->dateTime()
                     ->sortable(),
             ])
             ->filters([
-                Tables\Filters\SelectFilter::make('status')
+                Tables\Filters\SelectFilter::make('is_active')
+                    ->label('Status')
                     ->options([
-                        'active' => 'Active',
-                        'inactive' => 'Inactive',
-                        'suspended' => 'Suspended',
+                        1 => 'Active',
+                        0 => 'Inactive',
                     ]),
             ])
             ->actions([

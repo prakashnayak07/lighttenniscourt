@@ -13,6 +13,7 @@ class Organization extends Model
         'subdomain',
         'logo_url',
         'website',
+        'description',
         'currency',
         'timezone',
         'billing_status',
@@ -37,6 +38,11 @@ class Organization extends Model
     public function users(): HasMany
     {
         return $this->hasMany(User::class);
+    }
+
+    public function customers(): HasMany
+    {
+        return $this->hasMany(User::class)->where('role', \App\Enums\UserRole::Customer->value);
     }
 
     public function membershipTypes(): HasMany
