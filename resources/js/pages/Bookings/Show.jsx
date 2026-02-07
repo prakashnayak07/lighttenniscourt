@@ -117,18 +117,45 @@ export default function Show({ booking, auth }) {
                                 <PriceBreakdown lineItems={booking.line_items} />
                             </div>
 
-                            {/* QR Code Placeholder */}
-                            {booking.status === 'confirmed' && (
-                                <div className="bg-gray-50 rounded-lg p-6 mb-6 text-center">
-                                    <h3 className="text-lg font-bold text-gray-900 mb-2">Access Code</h3>
-                                    <div className="bg-white inline-block p-4 rounded-lg">
-                                        <div className="w-48 h-48 bg-gray-200 flex items-center justify-center">
-                                            <p className="text-gray-500">QR Code</p>
+                            {/* Access Code & QR Code */}
+                            {booking.status === 'confirmed' && booking.access_code && (
+                                <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg p-6 mb-6 border-2 border-blue-200">
+                                    <h3 className="text-xl font-bold text-gray-900 mb-4 text-center">Access Code</h3>
+
+                                    {/* Access Code Text */}
+                                    <div className="bg-white rounded-lg p-4 mb-4 text-center border border-blue-300">
+                                        <p className="text-sm text-gray-600 mb-2">Your Access Code</p>
+                                        <p className="text-3xl font-bold text-blue-600 tracking-wider font-mono">
+                                            {booking.access_code}
+                                        </p>
+                                    </div>
+
+                                    {/* QR Code Display */}
+                                    <div className="flex justify-center mb-4">
+                                        <div className="bg-white p-4 rounded-lg shadow-md">
+                                            {booking.qr_code ? (
+                                                <div
+                                                    className="w-48 h-48"
+                                                    dangerouslySetInnerHTML={{ __html: booking.qr_code }}
+                                                />
+                                            ) : (
+                                                <div className="w-48 h-48 bg-gray-100 flex items-center justify-center rounded">
+                                                    <svg className="w-32 h-32 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z" />
+                                                    </svg>
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
-                                    <p className="text-sm text-gray-600 mt-2">
-                                        Show this code at the court entrance
-                                    </p>
+
+                                    <div className="text-center">
+                                        <p className="text-sm text-gray-700 font-medium mb-1">
+                                            📱 Show this code at the court entrance
+                                        </p>
+                                        <p className="text-xs text-gray-500">
+                                            Valid from 30 minutes before your booking time
+                                        </p>
+                                    </div>
                                 </div>
                             )}
 

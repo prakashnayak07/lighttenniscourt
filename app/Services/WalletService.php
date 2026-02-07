@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\User;
 use App\Models\UserWallet;
 use App\Models\WalletTransaction;
+use App\Notifications\WalletTopUpSuccess;
 use Illuminate\Support\Facades\DB;
 
 class WalletService
@@ -38,7 +39,7 @@ class WalletService
             $wallet->increment('balance_cents', $amountCents);
 
             // Log transaction
-            return WalletTransaction::create([
+            $transaction = WalletTransaction::create([
                 'wallet_id' => $wallet->id,
                 'amount_cents' => $amountCents,
                 'type' => 'credit',
@@ -47,6 +48,11 @@ class WalletService
                 'description' => $description ?? 'Wallet top-up',
                 'balance_after_cents' => $wallet->balance_cents,
             ]);
+
+            // Send notification email
+            $wallet->user->notify(new WalletTopUpSuccess($transaction));
+
+            return $transaction;
         });
     }
 

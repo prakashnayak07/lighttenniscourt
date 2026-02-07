@@ -40,4 +40,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/bookings/{booking}/payment/cancel', [App\Http\Controllers\PaymentController::class, 'cancel'])->name('bookings.payment.cancel');
 });
 
+// Access Code Routes (for staff)
+Route::middleware(['auth'])->prefix('api')->group(function () {
+    Route::post('/access-code/validate', [App\Http\Controllers\AccessCodeController::class, 'validate'])->name('api.access-code.validate');
+    Route::post('/access-code/check-in', [App\Http\Controllers\AccessCodeController::class, 'checkIn'])->name('api.access-code.check-in');
+});
+
 require __DIR__.'/settings.php';

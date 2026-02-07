@@ -2,7 +2,7 @@
 
 namespace App\Services;
 
-use App\Models\MaintenanceLog;
+use App\Models\MaintenanceSchedule;
 use App\Models\Reservation;
 use App\Models\Resource;
 use Carbon\Carbon;
@@ -83,14 +83,14 @@ class AvailabilityService
      */
     protected function getMaintenanceSlots(Resource $resource, Carbon $date): Collection
     {
-        return MaintenanceLog::where('resource_id', $resource->id)
-            ->where('status', 'scheduled')
+        return MaintenanceSchedule::where('resource_id', $resource->id)
+            ->whereIn('status', ['scheduled', 'in_progress'])
             ->whereDate('start_datetime', '<=', $date)
             ->whereDate('end_datetime', '>=', $date)
             ->get()
-            ->map(fn ($log) => [
-                'start_time' => Carbon::parse($log->start_datetime)->format('H:i:s'),
-                'end_time' => Carbon::parse($log->end_datetime)->format('H:i:s'),
+            ->map(fn ($schedule) => [
+                'start_time' => Carbon::parse($schedule->start_datetime)->format('H:i:s'),
+                'end_time' => Carbon::parse($schedule->end_datetime)->format('H:i:s'),
             ]);
     }
 
@@ -198,8 +198,8 @@ class AvailabilityService
         $startDateTime = Carbon::parse($date->format('Y-m-d').' '.$startTime);
         $endDateTime = Carbon::parse($date->format('Y-m-d').' '.$endTime);
 
-        return MaintenanceLog::where('resource_id', $resource->id)
-            ->where('status', 'scheduled')
+        return MaintenanceSchedule::where('resource_id', $resource->id)
+            ->whereIn('status', ['scheduled', 'in_progress'])
             ->where(function ($q) use ($startDateTime, $endDateTime) {
                 $q->where(function ($q2) use ($startDateTime) {
                     $q2->where('start_datetime', '<=', $startDateTime)

@@ -5,6 +5,8 @@ namespace App\Services;
 use App\Models\Booking;
 use App\Models\Resource;
 use App\Models\User;
+use App\Notifications\BookingCancelled;
+use App\Notifications\BookingConfirmed;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -13,7 +15,8 @@ class BookingService
     public function __construct(
         protected AvailabilityService $availabilityService,
         protected PricingService $pricingService,
-        protected ReservationService $reservationService
+        protected ReservationService $reservationService,
+        protected AccessCodeService $accessCodeService
     ) {}
 
     /**
@@ -62,7 +65,18 @@ class BookingService
                 $booking->lineItems()->create($item);
             }
 
-            return $booking->fresh(['reservations', 'lineItems', 'resource', 'user']);
+            $booking = $booking->fresh(['reservations', 'lineItems', 'resource', 'user']);
+
+            // Generate access code for confirmed bookings
+            if ($booking->status === 'confirmed' || $booking->payment_status === 'paid') {
+                $accessCode = $this->accessCodeService->generateAccessCode($booking);
+                $booking->update(['access_code' => $accessCode]);
+            }
+
+            // Send confirmation email
+            $user->notify(new BookingConfirmed($booking));
+
+            return $booking;
         });
     }
 
@@ -75,10 +89,16 @@ class BookingService
             // Update booking status
             $booking->update(['status' => 'cancelled']);
 
+            $refundAmount = 0;
+
             // Issue refund if paid and refund requested
             if ($issueRefund && $booking->payment_status === 'paid') {
+                $refundAmount = $booking->lineItems->sum('total_cents');
                 $this->processRefund($booking);
             }
+
+            // Send cancellation email
+            $booking->user->notify(new BookingCancelled($booking, $refundAmount));
 
             return true;
         });
