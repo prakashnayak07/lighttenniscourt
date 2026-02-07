@@ -22,6 +22,11 @@ class Booking extends Model
         'check_in_at',
     ];
 
+    public function firstReservation(): \Illuminate\Database\Eloquent\Relations\HasOne
+    {
+        return $this->hasOne(Reservation::class)->oldestOfMany();
+    }
+
     protected function casts(): array
     {
         return [
