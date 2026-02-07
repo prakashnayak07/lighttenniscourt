@@ -18,7 +18,7 @@ class ClubMembershipTypeResource extends Resource
 
     protected static ?string $navigationLabel = 'Membership Types';
 
-    protected static ?string $navigationGroup = 'Configuration';
+    protected static $navigationGroup = 'Configuration';
 
     protected static ?int $navigationSort = 6;
 

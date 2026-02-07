@@ -16,7 +16,7 @@ class CouponResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-ticket';
 
-    protected static ?string $navigationGroup = 'Configuration';
+    protected static $navigationGroup = 'Configuration';
 
     protected static ?int $navigationSort = 7;
 

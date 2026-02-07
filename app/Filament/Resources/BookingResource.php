@@ -16,7 +16,7 @@ class BookingResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-calendar-days';
 
-    protected static ?string $navigationGroup = 'Management';
+    protected static $navigationGroup = 'Management';
 
     protected static ?int $navigationSort = 4;
 

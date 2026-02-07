@@ -18,7 +18,7 @@ class MaintenanceScheduleResource extends FilamentResource
 
     protected static ?string $navigationIcon = 'heroicon-o-wrench-screwdriver';
 
-    protected static ?string $navigationGroup = 'Management';
+    protected static $navigationGroup = 'Management';
 
     protected static ?int $navigationSort = 4;
 

@@ -16,7 +16,7 @@ class PricingRuleResource extends Resource
 
     protected static ?string $navigationIcon = 'heroicon-o-currency-dollar';
 
-    protected static ?string $navigationGroup = 'Configuration';
+    protected static $navigationGroup = 'Configuration';
 
     protected static ?int $navigationSort = 5;
 
