@@ -1,0 +1,63 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+
+class Booking extends Model
+{
+    protected $fillable = [
+        'organization_id',
+        'user_id',
+        'resource_id',
+        'status',
+        'payment_status',
+        'visibility',
+        'notes',
+        'check_in_at',
+    ];
+
+    protected function casts(): array
+    {
+        return [
+            'check_in_at' => 'datetime',
+        ];
+    }
+
+    public function organization(): BelongsTo
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+
+    public function resource(): BelongsTo
+    {
+        return $this->belongsTo(Resource::class);
+    }
+
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(Reservation::class);
+    }
+
+    public function participants(): HasMany
+    {
+        return $this->hasMany(BookingParticipant::class);
+    }
+
+    public function lineItems(): HasMany
+    {
+        return $this->hasMany(BookingLineItem::class);
+    }
+
+    public function accessCodes(): HasMany
+    {
+        return $this->hasMany(BookingAccessCode::class);
+    }
+}

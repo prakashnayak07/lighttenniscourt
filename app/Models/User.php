@@ -19,9 +19,16 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
-        'name',
+        'organization_id',
         'email',
         'password',
+        'first_name',
+        'last_name',
+        'phone',
+        'role',
+        'status',
+        'metadata',
+        'last_login_at',
     ];
 
     /**
@@ -47,6 +54,28 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password' => 'hashed',
             'two_factor_confirmed_at' => 'datetime',
+            'metadata' => 'array',
+            'last_login_at' => 'datetime',
         ];
+    }
+
+    public function organization()
+    {
+        return $this->belongsTo(Organization::class);
+    }
+
+    public function bookings()
+    {
+        return $this->hasMany(Booking::class);
+    }
+
+    public function memberships()
+    {
+        return $this->hasMany(UserClubMembership::class);
+    }
+
+    public function wallet()
+    {
+        return $this->hasOne(UserWallet::class);
     }
 }
