@@ -4,10 +4,11 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\CouponResource\Pages;
 use App\Models\Coupon;
+use App\Models\Organization;
 use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -25,6 +26,13 @@ class CouponResource extends Resource
     {
         return $schema
             ->schema([
+                Forms\Components\Select::make('organization_id')
+                    ->label('Organization')
+                    ->options(fn () => Organization::query()->orderBy('name')->pluck('name', 'id'))
+                    ->searchable()
+                    ->default(fn () => config('app.current_organization_id'))
+                    ->required(fn () => auth()->user()?->isSuperAdmin())
+                    ->visible(fn () => auth()->user()?->isSuperAdmin()),
                 Forms\Components\TextInput::make('code')
                     ->required()
                     ->unique(ignoreRecord: true)
@@ -35,11 +43,11 @@ class CouponResource extends Resource
                     ->columnSpanFull(),
                 Forms\Components\Select::make('discount_type')
                     ->options([
-                        'percentage' => 'Percentage',
+                        'percent' => 'Percentage',
                         'fixed' => 'Fixed Amount',
                     ])
                     ->required()
-                    ->default('percentage'),
+                    ->default('percent'),
                 Forms\Components\TextInput::make('discount_value')
                     ->numeric()
                     ->required()

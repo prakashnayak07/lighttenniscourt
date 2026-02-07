@@ -25,6 +25,9 @@ export default defineConfig({
         jsx: 'automatic',
     },
     server: {
-        host: true,
+        host: '127.0.0.1',
+        hmr: {
+            host: '127.0.0.1',
+        },
     },
 });

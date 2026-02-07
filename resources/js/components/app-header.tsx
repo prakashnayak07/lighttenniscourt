@@ -1,5 +1,13 @@
 import { Link, usePage } from '@inertiajs/react';
-import { BookOpen, Folder, LayoutGrid, Menu, Search } from 'lucide-react';
+import {
+    BadgeCheck,
+    BookOpen,
+    Calendar,
+    LayoutGrid,
+    Menu,
+    Search,
+    Wallet,
+} from 'lucide-react';
 import { Breadcrumbs } from '@/components/breadcrumbs';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -32,6 +40,9 @@ import { useCurrentUrl } from '@/hooks/use-current-url';
 import { useInitials } from '@/hooks/use-initials';
 import { cn, toUrl } from '@/lib/utils';
 import { dashboard } from '@/routes';
+import { index as bookingsIndex } from '@/routes/bookings';
+import { index as membershipIndex } from '@/routes/membership';
+import { index as walletIndex } from '@/routes/wallet';
 import type { BreadcrumbItem, NavItem, SharedData } from '@/types';
 import AppLogo from './app-logo';
 import AppLogoIcon from './app-logo-icon';
@@ -46,14 +57,25 @@ const mainNavItems: NavItem[] = [
         href: dashboard(),
         icon: LayoutGrid,
     },
+    {
+        title: 'Membership',
+        href: membershipIndex(),
+        icon: BadgeCheck,
+    },
+    {
+        title: 'Bookings',
+        href: bookingsIndex(),
+        icon: Calendar,
+    },
+    {
+        title: 'Wallet',
+        href: walletIndex(),
+        icon: Wallet,
+    },
 ];
 
 const rightNavItems: NavItem[] = [
-    {
-        title: 'Repository',
-        href: 'https://github.com/laravel/react-starter-kit',
-        icon: Folder,
-    },
+
     {
         title: 'Documentation',
         href: 'https://laravel.com/docs/starter-kits#react',

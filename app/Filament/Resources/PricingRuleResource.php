@@ -3,11 +3,13 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\PricingRuleResource\Pages;
+use App\Models\Organization;
 use App\Models\PricingRule;
+use Carbon\Carbon;
 use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -25,29 +27,54 @@ class PricingRuleResource extends Resource
     {
         return $schema
             ->schema([
+                Forms\Components\Select::make('organization_id')
+                    ->label('Organization')
+                    ->options(fn () => Organization::query()->orderBy('name')->pluck('name', 'id'))
+                    ->searchable()
+                    ->default(fn () => config('app.current_organization_id'))
+                    ->required(fn () => auth()->user()?->isSuperAdmin())
+                    ->visible(fn () => auth()->user()?->isSuperAdmin()),
                 Forms\Components\Select::make('resource_id')
                     ->relationship('resource', 'name')
                     ->nullable()
                     ->helperText('Leave empty for organization-wide pricing'),
-                Forms\Components\Select::make('day_of_week')
+                Forms\Components\Select::make('day_of_week_start')
+                    ->label('Day of week (start)')
                     ->options([
-                        'monday' => 'Monday',
-                        'tuesday' => 'Tuesday',
-                        'wednesday' => 'Wednesday',
-                        'thursday' => 'Thursday',
-                        'friday' => 'Friday',
-                        'saturday' => 'Saturday',
-                        'sunday' => 'Sunday',
+                        1 => 'Monday',
+                        2 => 'Tuesday',
+                        3 => 'Wednesday',
+                        4 => 'Thursday',
+                        5 => 'Friday',
+                        6 => 'Saturday',
+                        7 => 'Sunday',
                     ])
-                    ->nullable()
-                    ->helperText('Leave empty for all days'),
-                Forms\Components\TimePicker::make('start_time')
-                    ->nullable()
+                    ->default(1)
+                    ->required()
+                    ->helperText('Use Monday–Sunday for all days'),
+                Forms\Components\Select::make('day_of_week_end')
+                    ->label('Day of week (end)')
+                    ->options([
+                        1 => 'Monday',
+                        2 => 'Tuesday',
+                        3 => 'Wednesday',
+                        4 => 'Thursday',
+                        5 => 'Friday',
+                        6 => 'Saturday',
+                        7 => 'Sunday',
+                    ])
+                    ->default(7)
+                    ->required(),
+                Forms\Components\TimePicker::make('time_start')
+                    ->label('Start time')
                     ->seconds(false)
-                    ->helperText('Leave empty for all day'),
-                Forms\Components\TimePicker::make('end_time')
-                    ->nullable()
-                    ->seconds(false),
+                    ->default('00:00')
+                    ->helperText('Use 00:00 for all day'),
+                Forms\Components\TimePicker::make('time_end')
+                    ->label('End time')
+                    ->seconds(false)
+                    ->default('23:59')
+                    ->helperText('Use 23:59 for all day'),
                 Forms\Components\TextInput::make('price_cents')
                     ->numeric()
                     ->required()
@@ -64,14 +91,50 @@ class PricingRuleResource extends Resource
                 Tables\Columns\TextColumn::make('resource.name')
                     ->default('All Courts')
                     ->sortable(),
-                Tables\Columns\TextColumn::make('day_of_week')
-                    ->default('All Days')
-                    ->formatStateUsing(fn ($state) => $state ? ucfirst($state) : 'All Days'),
-                Tables\Columns\TextColumn::make('start_time')
-                    ->time('H:i')
-                    ->default('All Day'),
-                Tables\Columns\TextColumn::make('end_time')
-                    ->time('H:i'),
+                Tables\Columns\TextColumn::make('day_of_week_start')
+                    ->label('Day(s)')
+                    ->formatStateUsing(function ($state, $record) {
+                        $labels = [
+                            1 => 'Mon',
+                            2 => 'Tue',
+                            3 => 'Wed',
+                            4 => 'Thu',
+                            5 => 'Fri',
+                            6 => 'Sat',
+                            7 => 'Sun',
+                        ];
+
+                        $start = (int) $record->day_of_week_start;
+                        $end = (int) $record->day_of_week_end;
+
+                        if ($start === 1 && $end === 7) {
+                            return 'All Days';
+                        }
+
+                        if ($start === $end) {
+                            return $labels[$start] ?? '—';
+                        }
+
+                        return ($labels[$start] ?? '—').' - '.($labels[$end] ?? '—');
+                    }),
+                Tables\Columns\TextColumn::make('time_start')
+                    ->label('Start time')
+                    ->formatStateUsing(function ($state, $record) {
+                        if ($record->time_start === '00:00:00' && $record->time_end === '23:59:59') {
+                            return 'All Day';
+                        }
+
+                        return $state ? Carbon::parse($state)->format('H:i') : '—';
+                    }),
+                Tables\Columns\TextColumn::make('time_end')
+                    ->label('End time')
+                    ->formatStateUsing(function ($state, $record) {
+                        if ($record->time_start === '00:00:00' && $record->time_end === '23:59:59') {
+                            return 'All Day';
+                        }
+
+                        return $state ? Carbon::parse($state)->format('H:i') : '—';
+                    }),
                 Tables\Columns\TextColumn::make('price_cents')
                     ->money('USD', divideBy: 100)
                     ->sortable(),

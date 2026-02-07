@@ -3,11 +3,12 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\ResourceResource\Pages;
+use App\Models\Organization;
 use App\Models\Resource as CourtResource;
 use Filament\Actions;
 use Filament\Forms;
-use Filament\Schemas\Schema;
 use Filament\Resources\Resource;
+use Filament\Schemas\Schema;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -31,6 +32,13 @@ class ResourceResource extends Resource
     {
         return $schema
             ->schema([
+                Forms\Components\Select::make('organization_id')
+                    ->label('Organization')
+                    ->options(fn () => Organization::query()->orderBy('name')->pluck('name', 'id'))
+                    ->searchable()
+                    ->default(fn () => config('app.current_organization_id'))
+                    ->required(fn () => auth()->user()?->isSuperAdmin())
+                    ->visible(fn () => auth()->user()?->isSuperAdmin()),
                 Forms\Components\TextInput::make('name')
                     ->required()
                     ->maxLength(255),
