@@ -69,17 +69,45 @@ class BookingService
     /**
      * Cancel a booking.
      */
-    public function cancelBooking(Booking $booking): bool
+    public function cancelBooking(Booking $booking, bool $issueRefund = true): bool
     {
-        return DB::transaction(function () use ($booking) {
+        return DB::transaction(function () use ($booking, $issueRefund) {
             // Update booking status
             $booking->update(['status' => 'cancelled']);
 
-            // Handle refund logic here if needed
-            // This would integrate with wallet or payment system
+            // Issue refund if paid and refund requested
+            if ($issueRefund && $booking->payment_status === 'paid') {
+                $this->processRefund($booking);
+            }
 
             return true;
         });
+    }
+
+    /**
+     * Process refund for cancelled booking.
+     */
+    protected function processRefund(Booking $booking): void
+    {
+        $totalPaid = $booking->lineItems->sum('total_cents');
+
+        if ($booking->payment_method === 'wallet') {
+            // Refund to wallet
+            $walletService = app(\App\Services\WalletService::class);
+            $wallet = $walletService->getOrCreateWallet($booking->user);
+            $walletService->refund(
+                $wallet,
+                $totalPaid,
+                $booking->id,
+                'Booking cancelled'
+            );
+
+            $booking->update(['payment_status' => 'refunded']);
+        } elseif ($booking->payment_method === 'stripe') {
+            // Refund via Stripe would be implemented here
+            // This would call Stripe API to create a refund
+            $booking->update(['payment_status' => 'refund_pending']);
+        }
     }
 
     /**

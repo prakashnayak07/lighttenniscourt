@@ -25,4 +25,19 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/api/available-slots', [App\Http\Controllers\BookingController::class, 'availableSlots'])->name('api.available-slots');
 });
 
+// Wallet Routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::get('/wallet', [App\Http\Controllers\WalletController::class, 'index'])->name('wallet.index');
+    Route::get('/wallet/top-up', [App\Http\Controllers\WalletController::class, 'topUpForm'])->name('wallet.topup.form');
+    Route::post('/wallet/top-up', [App\Http\Controllers\WalletController::class, 'topUp'])->name('wallet.topup');
+    Route::get('/wallet/top-up/success', [App\Http\Controllers\WalletController::class, 'topUpSuccess'])->name('wallet.topup.success');
+});
+
+// Payment Routes
+Route::middleware(['auth', 'verified'])->group(function () {
+    Route::post('/bookings/{booking}/checkout', [App\Http\Controllers\PaymentController::class, 'checkout'])->name('bookings.checkout');
+    Route::get('/bookings/{booking}/payment/success', [App\Http\Controllers\PaymentController::class, 'success'])->name('bookings.payment.success');
+    Route::get('/bookings/{booking}/payment/cancel', [App\Http\Controllers\PaymentController::class, 'cancel'])->name('bookings.payment.cancel');
+});
+
 require __DIR__.'/settings.php';
