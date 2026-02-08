@@ -8,4 +8,13 @@ use Filament\Resources\Pages\CreateRecord;
 class CreateUser extends CreateRecord
 {
     protected static string $resource = UserResource::class;
+
+    protected function mutateFormDataBeforeCreate(array $data): array
+    {
+        if (! auth()->user()?->isSuperAdmin()) {
+            $data['organization_id'] = auth()->user()?->organization_id;
+        }
+
+        return $data;
+    }
 }

@@ -10,6 +10,11 @@ class EditUser extends EditRecord
 {
     protected static string $resource = UserResource::class;
 
+    protected function authorizeAccess(): void
+    {
+        abort_unless(UserResource::canEdit($this->record), 403);
+    }
+
     protected function getHeaderActions(): array
     {
         return [

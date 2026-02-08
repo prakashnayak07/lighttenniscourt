@@ -30,6 +30,26 @@ class ResourceResource extends Resource
 
     protected static ?int $navigationSort = 3;
 
+    public static function canCreate(): bool
+    {
+        if (auth()->user()?->isSuperAdmin()) {
+            return true;
+        }
+
+        $organizationId = auth()->user()?->organization_id;
+        if (! $organizationId) {
+            return false;
+        }
+
+        $organization = Organization::find($organizationId);
+
+        if (! $organization?->activeSubscription()) {
+            return false;
+        }
+
+        return $organization->canCreateAnotherResource();
+    }
+
     protected static array $surfaceTypeOptions = [
         'clay' => 'Clay',
         'hard' => 'Hard Court',
@@ -58,6 +78,9 @@ class ResourceResource extends Resource
                             ->default(fn() => config('app.current_organization_id'))
                             ->required(fn() => auth()->user()?->isSuperAdmin())
                             ->visible(fn() => auth()->user()?->isSuperAdmin()),
+                        Forms\Components\Hidden::make('organization_id')
+                            ->default(fn () => auth()->user()?->organization_id)
+                            ->visible(fn () => ! auth()->user()?->isSuperAdmin()),
                         Forms\Components\TextInput::make('name')
                             ->label('Court name')
                             ->placeholder('e.g. Court 1, Center Court')
@@ -191,6 +214,31 @@ class ResourceResource extends Resource
                         ->icon('heroicon-o-document-duplicate')
                         ->color('gray')
                         ->action(function (CourtResource $record) {
+                            $organization = $record->organization;
+
+                            if ($organization && ! $organization->activeSubscription()) {
+                                Notification::make()
+                                    ->title('Active subscription required')
+                                    ->body('This organization needs an active subscription before creating more courts.')
+                                    ->danger()
+                                    ->send();
+
+                                return null;
+                            }
+
+                            if ($organization && ! $organization->canCreateAnotherResource()) {
+                                $limit = $organization->getMaxCourtsLimit();
+                                $limitLabel = $limit === null ? 'unlimited' : (string) $limit;
+
+                                Notification::make()
+                                    ->title('Court limit reached')
+                                    ->body("This organization's plan allows a maximum of {$limitLabel} courts.")
+                                    ->danger()
+                                    ->send();
+
+                                return null;
+                            }
+
                             $clone = $record->replicate();
                             $clone->name = preg_match('/\s*\(Copy(?:\s*\d*)?\)\s*$/', $record->name)
                                 ? $record->name

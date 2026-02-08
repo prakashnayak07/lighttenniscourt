@@ -4,6 +4,7 @@ namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrganizationResource\Pages;
 use App\Models\Organization;
+use App\Models\SystemPlan;
 use Filament\Resources\Resource;
 use Filament\Schemas\Components\Section as SchemaSection;
 use Filament\Schemas\Schema;
@@ -11,6 +12,7 @@ use Filament\Tables\Table;
 use Filament\Actions;
 use Filament\Forms;
 use Filament\Tables;
+use Illuminate\Support\HtmlString;
 
 class OrganizationResource extends Resource
 {
@@ -24,7 +26,42 @@ class OrganizationResource extends Resource
 
     public static function canViewAny(): bool
     {
-        return auth()->user()->isSuperAdmin();
+        return auth()->user()?->isSuperAdmin() || auth()->user()?->isAdmin();
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->isSuperAdmin();
+    }
+
+    public static function canView($record): bool
+    {
+        if (auth()->user()?->isSuperAdmin()) {
+            return true;
+        }
+
+        return auth()->user()?->isAdmin() && auth()->user()?->organization_id === $record?->id;
+    }
+
+    public static function canEdit($record): bool
+    {
+        return static::canView($record);
+    }
+
+    public static function canDelete($record): bool
+    {
+        return auth()->user()?->isSuperAdmin();
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if (auth()->user()?->isSuperAdmin()) {
+            return $query;
+        }
+
+        return $query->whereKey(auth()->user()?->organization_id);
     }
 
     public static function form(Schema $schema): Schema
@@ -85,6 +122,40 @@ class OrganizationResource extends Resource
                             ->native(false),
                     ])
                     ->columns(1),
+                SchemaSection::make('Subscription plans')
+                    ->description('All system plans are buyable. Active plan is highlighted.')
+                    ->schema([
+                        Forms\Components\Placeholder::make('system_plan_overview')
+                            ->label('Plans')
+                            ->content(function (?Organization $record) {
+                                if (! $record) {
+                                    return 'Save the organization to view plans.';
+                                }
+
+                                $activePlanId = $record->activeSubscription()?->plan_id;
+                                $plans = SystemPlan::query()
+                                    ->where('is_active', true)
+                                    ->orderBy('price_cents')
+                                    ->get();
+
+                                if ($plans->isEmpty()) {
+                                    return 'No active system plans available.';
+                                }
+
+                                $lines = $plans->map(function (SystemPlan $plan) use ($activePlanId) {
+                                    $price = '$'.number_format($plan->price_cents / 100, 2);
+                                    $interval = $plan->billing_interval === 'year' ? 'year' : 'month';
+                                    $maxCourts = $plan->features_config['max_courts'] ?? null;
+                                    $maxCourtsLabel = $maxCourts === null ? 'Unlimited courts' : "{$maxCourts} courts";
+                                    $statusLabel = $plan->id === $activePlanId ? 'Active' : 'Buyable';
+
+                                    return "<li><strong>{$plan->name}</strong> — {$price}/{$interval} · {$maxCourtsLabel} · {$statusLabel}</li>";
+                                })->implode('');
+
+                                return new HtmlString("<ul class=\"list-disc pl-5 space-y-1\">{$lines}</ul>");
+                            }),
+                    ])
+                    ->visible(fn (?Organization $record) => $record !== null),
                 SchemaSection::make('Description')
                     ->schema([
                         Forms\Components\RichEditor::make('description')

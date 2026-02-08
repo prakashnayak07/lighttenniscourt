@@ -2,9 +2,9 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Model;
 
 class Organization extends Model
 {
@@ -33,6 +33,44 @@ class Organization extends Model
     public function subscription(): HasOne
     {
         return $this->hasOne(Subscription::class);
+    }
+
+    public function activeSubscription(): ?Subscription
+    {
+        $subscription = $this->subscription;
+
+        if (! $subscription || $subscription->status !== 'active') {
+            return null;
+        }
+
+        return $subscription;
+    }
+
+    public function getMaxCourtsLimit(): ?int
+    {
+        $plan = $this->activeSubscription()?->plan;
+        $maxCourts = $plan?->features_config['max_courts'] ?? null;
+
+        if ($maxCourts === null) {
+            return null;
+        }
+
+        return (int) $maxCourts;
+    }
+
+    public function canCreateAnotherResource(): bool
+    {
+        if (! $this->activeSubscription()) {
+            return false;
+        }
+
+        $limit = $this->getMaxCourtsLimit();
+
+        if ($limit === null) {
+            return true;
+        }
+
+        return $this->resources()->count() < $limit;
     }
 
     public function users(): HasMany

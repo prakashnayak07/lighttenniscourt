@@ -23,6 +23,43 @@ class UserResource extends Resource
 
     protected static ?int $navigationSort = 2;
 
+    public static function canViewAny(): bool
+    {
+        return auth()->user()?->isSuperAdmin() || auth()->user()?->isAdmin();
+    }
+
+    public static function canCreate(): bool
+    {
+        return auth()->user()?->isSuperAdmin() || auth()->user()?->isAdmin();
+    }
+
+    public static function canEdit($record): bool
+    {
+        if (auth()->user()?->isSuperAdmin()) {
+            return true;
+        }
+
+        return auth()->user()?->isAdmin()
+            && auth()->user()?->organization_id === $record?->organization_id
+            && $record?->role !== UserRole::SuperAdmin;
+    }
+
+    public static function canDelete($record): bool
+    {
+        return static::canEdit($record);
+    }
+
+    public static function getEloquentQuery(): \Illuminate\Database\Eloquent\Builder
+    {
+        $query = parent::getEloquentQuery();
+
+        if (auth()->user()?->isSuperAdmin()) {
+            return $query;
+        }
+
+        return $query->where('organization_id', auth()->user()?->organization_id);
+    }
+
     public static function form(Schema $schema): Schema
     {
         return $schema
@@ -42,13 +79,20 @@ class UserResource extends Resource
                     ->tel()
                     ->maxLength(20),
                 Forms\Components\Select::make('role')
-                    ->options([
-                        UserRole::SuperAdmin->value => 'Super Admin',
-                        UserRole::Admin->value => 'Admin',
-                        UserRole::Staff->value => 'Staff',
-                        UserRole::Coach->value => 'Coach',
-                        UserRole::Customer->value => 'Customer',
-                    ])
+                    ->options(fn () => auth()->user()?->isSuperAdmin()
+                        ? [
+                            UserRole::SuperAdmin->value => 'Super Admin',
+                            UserRole::Admin->value => 'Admin',
+                            UserRole::Staff->value => 'Staff',
+                            UserRole::Coach->value => 'Coach',
+                            UserRole::Customer->value => 'Customer',
+                        ]
+                        : [
+                            UserRole::Admin->value => 'Admin',
+                            UserRole::Staff->value => 'Staff',
+                            UserRole::Coach->value => 'Coach',
+                            UserRole::Customer->value => 'Customer',
+                        ])
                     ->required()
                     ->default(UserRole::Customer->value),
                 Forms\Components\Select::make('status')
@@ -63,7 +107,10 @@ class UserResource extends Resource
                 Forms\Components\Select::make('organization_id')
                     ->relationship('organization', 'name')
                     ->required()
-                    ->visible(fn () => auth()->user()->isSuperAdmin()),
+                    ->visible(fn () => auth()->user()?->isSuperAdmin()),
+                Forms\Components\Hidden::make('organization_id')
+                    ->default(fn () => auth()->user()?->organization_id)
+                    ->visible(fn () => ! auth()->user()?->isSuperAdmin()),
                 Forms\Components\TextInput::make('password')
                     ->password()
                     ->dehydrateStateUsing(fn ($state) => filled($state) ? bcrypt($state) : null)
