@@ -14,6 +14,8 @@ class ClubMembershipType extends Model
     protected $fillable = [
         'organization_id',
         'name',
+        'max_resources',
+        'description',
         'price_cents',
         'billing_cycle',
         'booking_window_days',
@@ -26,6 +28,8 @@ class ClubMembershipType extends Model
     {
         return [
             'is_public' => 'boolean',
+            'max_resources' => 'integer',
+            'court_fee_discount_percent' => 'decimal:2',
         ];
     }
 }

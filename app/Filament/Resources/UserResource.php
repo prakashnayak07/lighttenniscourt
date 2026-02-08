@@ -3,6 +3,7 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\UserResource\Pages;
+use App\Filament\Resources\UserResource\RelationManagers\UserClubMembershipsRelationManager;
 use App\Models\User;
 use Filament\Actions;
 use App\Enums\UserRole;
@@ -173,7 +174,7 @@ class UserResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            UserClubMembershipsRelationManager::class,
         ];
     }
 

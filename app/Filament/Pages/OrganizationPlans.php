@@ -26,7 +26,7 @@ class OrganizationPlans extends Page
 
     public static function shouldRegisterNavigation(): bool
     {
-        return auth()->user()?->isAdmin() || auth()->user()?->isSuperAdmin();
+        return auth()->user()?->isAdmin();
     }
 
     public function mount(): void

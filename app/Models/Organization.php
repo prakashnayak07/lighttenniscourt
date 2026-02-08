@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasManyThrough;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\Model;
 
@@ -81,6 +82,11 @@ class Organization extends Model
     public function customers(): HasMany
     {
         return $this->hasMany(User::class)->where('role', \App\Enums\UserRole::Customer->value);
+    }
+
+    public function userClubMemberships(): HasManyThrough
+    {
+        return $this->hasManyThrough(UserClubMembership::class, User::class);
     }
 
     public function membershipTypes(): HasMany

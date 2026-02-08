@@ -3,6 +3,8 @@
 namespace App\Filament\Resources;
 
 use App\Filament\Resources\OrganizationResource\Pages;
+use App\Filament\Resources\OrganizationResource\RelationManagers\ClubMembershipTypesRelationManager;
+use App\Filament\Resources\OrganizationResource\RelationManagers\UsersRelationManager;
 use App\Models\Organization;
 use App\Models\SystemPlan;
 use Filament\Resources\Resource;
@@ -231,7 +233,8 @@ class OrganizationResource extends Resource
     public static function getRelations(): array
     {
         return [
-            //
+            ClubMembershipTypesRelationManager::class,
+            UsersRelationManager::class,
         ];
     }
 
