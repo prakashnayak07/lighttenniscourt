@@ -10,6 +10,7 @@ use Filament\Actions;
 use Filament\Forms;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
+use Filament\Notifications\Notification;
 use Filament\Tables;
 use Filament\Tables\Table;
 
@@ -144,10 +145,33 @@ class PricingRuleResource extends Resource
             ->filters([
                 Tables\Filters\TernaryFilter::make('is_active'),
             ])
-            ->actions([
-                Actions\EditAction::make(),
+            ->recordActions([
+                Actions\ActionGroup::make([
+                    Actions\EditAction::make(),
+                    Actions\Action::make('clone')
+                        ->label('Clone')
+                        ->icon('heroicon-o-document-duplicate')
+                        ->color('gray')
+                        ->action(function (PricingRule $record) {
+                            $clone = $record->replicate();
+                            if ($record->name) {
+                                $clone->name = preg_match('/\s*\(Copy(?:\s*\d*)?\)\s*$/', $record->name)
+                                    ? $record->name
+                                    : $record->name.' (Copy)';
+                            }
+                            $clone->save();
+                            Notification::make()
+                                ->title('Pricing rule cloned')
+                                ->body('A copy has been created. You can edit it now.')
+                                ->success()
+                                ->send();
+
+                            return redirect(PricingRuleResource::getUrl('edit', ['record' => $clone]));
+                        }),
+                    Actions\DeleteAction::make(),
+                ]),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Actions\BulkActionGroup::make([
                     Actions\DeleteBulkAction::make(),
                 ]),

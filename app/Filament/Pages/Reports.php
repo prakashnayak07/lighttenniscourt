@@ -2,9 +2,11 @@
 
 namespace App\Filament\Pages;
 
+use App\Models\Organization;
 use App\Services\ReportService;
 use Carbon\Carbon;
 use Filament\Forms\Components\DatePicker;
+use Filament\Forms\Components\Select;
 use Filament\Schemas\Components\Section;
 use Filament\Forms\Concerns\InteractsWithForms;
 use Filament\Forms\Contracts\HasForms;
@@ -49,64 +51,97 @@ class Reports extends Page implements HasForms, HasTable
 
     public function form(Schema $schema): Schema
     {
+        $isSuperAdmin = auth()->user()?->isSuperAdmin();
+
         return $schema
             ->schema([
-                Section::make('Date Range')
-                    ->schema([
+                Section::make('Filters')
+                    ->schema(array_filter([
+                        $isSuperAdmin ? Select::make('organizationId')
+                            ->label('Organization')
+                            ->placeholder('All organizations')
+                            ->options(Organization::query()->orderBy('name')->pluck('name', 'id'))
+                            ->searchable()
+                            ->nullable()
+                            ->live() : null,
                         DatePicker::make('startDate')
                             ->label('Start Date')
                             ->required()
                             ->default(Carbon::now()->startOfMonth()),
-
                         DatePicker::make('endDate')
                             ->label('End Date')
                             ->required()
                             ->default(Carbon::now()->endOfMonth())
                             ->after('startDate'),
-                    ])
-                    ->columns(2),
+                    ]))
+                    ->columns($isSuperAdmin ? 3 : 2),
             ])
             ->statePath('data');
+    }
+
+    public function getReportOrganizationId(): ?int
+    {
+        $id = $this->data['organizationId'] ?? null;
+        if ($id !== null && $id !== '') {
+            return (int) $id;
+        }
+        if (! auth()->user()?->isSuperAdmin()) {
+            return (int) (auth()->user()?->organization_id ?? 0) ?: null;
+        }
+
+        return null;
     }
 
     public function loadReports(): void
     {
         $reportService = app(ReportService::class);
-        $from = Carbon::parse($this->startDate);
-        $to = Carbon::parse($this->endDate);
+        $from = Carbon::parse($this->data['startDate'] ?? $this->startDate);
+        $to = Carbon::parse($this->data['endDate'] ?? $this->endDate);
+        $organizationId = $this->getReportOrganizationId();
 
-        $this->bookingStats = $reportService->getBookingReport($from, $to);
-        $this->revenueStats = $reportService->getRevenueReport($from, $to);
-        $this->utilizationStats = $reportService->getCourtUtilizationReport($from, $to);
+        $this->startDate = $from->format('Y-m-d');
+        $this->endDate = $to->format('Y-m-d');
+
+        $this->bookingStats = $reportService->getBookingReport($from, $to, $organizationId);
+        $this->revenueStats = $reportService->getRevenueReport($from, $to, $organizationId);
+        $this->utilizationStats = $reportService->getCourtUtilizationReport($from, $to, $organizationId);
     }
 
     public function exportBookingsCsv(): void
     {
         $reportService = app(ReportService::class);
-        $from = Carbon::parse($this->startDate);
-        $to = Carbon::parse($this->endDate);
+        $from = Carbon::parse($this->data['startDate'] ?? $this->startDate);
+        $to = Carbon::parse($this->data['endDate'] ?? $this->endDate);
+        $organizationId = $this->getReportOrganizationId();
 
         $bookings = \App\Models\Booking::query()
+            ->when($organizationId, fn ($q) => $q->where('organization_id', $organizationId))
             ->whereBetween('created_at', [$from, $to])
-            ->with(['resource', 'user'])
+            ->with(['resource', 'user', 'reservations' => fn ($q) => $q->orderBy('id')])
             ->get()
-            ->map(fn ($booking) => [
-                'ID' => $booking->id,
-                'Court' => $booking->resource->name,
-                'User' => $booking->user->name,
-                'Date' => $booking->date->format('Y-m-d'),
-                'Time' => $booking->start_time . ' - ' . $booking->end_time,
-                'Status' => $booking->status,
-                'Payment Status' => $booking->payment_status,
-                'Created At' => $booking->created_at->format('Y-m-d H:i:s'),
-            ])
+            ->map(function ($booking) {
+                $reservation = $booking->reservations->first();
+                $user = $booking->user;
+                $userLabel = $user ? trim($user->first_name.' '.$user->last_name) : '';
+                if ($userLabel === '' && $user) {
+                    $userLabel = $user->email;
+                }
+
+                return [
+                    'ID' => $booking->id,
+                    'Court' => $booking->resource?->name ?? '',
+                    'User' => $userLabel,
+                    'Date' => $reservation?->reservation_date?->format('Y-m-d') ?? '',
+                    'Time' => $reservation ? ($reservation->start_time.' - '.$reservation->end_time) : '',
+                    'Status' => $booking->status,
+                    'Payment Status' => $booking->payment_status,
+                    'Created At' => $booking->created_at?->format('Y-m-d H:i:s') ?? '',
+                ];
+            })
             ->toArray();
 
-        $filepath = $reportService->exportToCsv($bookings, 'bookings_' . now()->format('Y-m-d_His') . '.csv');
+        $reportService->exportToCsv($bookings, 'bookings_'.now()->format('Y-m-d_His').'.csv');
 
         $this->redirect(route('filament.admin.pages.reports'));
-        
-        // Note: In production, you'd want to download the file
-        // For now, it's saved to storage/app/reports/
     }
 }

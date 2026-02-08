@@ -131,9 +131,10 @@ class ResourceResource extends Resource
                     ->sortable()
                     ->toggleable(isToggledHiddenByDefault: true)
                     ->visible(fn() => auth()->user()?->isSuperAdmin()),
-                Tables\Columns\BadgeColumn::make('surface_type')
+                Tables\Columns\TextColumn::make('surface_type')
                     ->label('Surface')
-                    ->formatStateUsing(fn(string $state) => static::$surfaceTypeOptions[$state] ?? $state),
+                    ->badge()
+                    ->formatStateUsing(fn (string $state) => static::$surfaceTypeOptions[$state] ?? $state),
                 Tables\Columns\IconColumn::make('is_indoor')
                     ->label('Indoor')
                     ->boolean()
@@ -146,7 +147,8 @@ class ResourceResource extends Resource
                     ->trueIcon('heroicon-o-bolt')
                     ->falseIcon('heroicon-o-bolt-slash')
                     ->toggleable(),
-                Tables\Columns\BadgeColumn::make('status')
+                Tables\Columns\TextColumn::make('status')
+                    ->badge()
                     ->colors([
                         'success' => 'enabled',
                         'danger' => 'disabled',
@@ -181,7 +183,7 @@ class ResourceResource extends Resource
                 Tables\Filters\TernaryFilter::make('has_lighting')
                     ->label('Has lighting'),
             ])
-            ->actions([
+            ->recordActions([
                 Actions\ActionGroup::make([
                     Actions\EditAction::make(),
                     Actions\Action::make('clone')
@@ -205,7 +207,7 @@ class ResourceResource extends Resource
                     Actions\DeleteAction::make(),
                 ]),
             ])
-            ->bulkActions([
+            ->toolbarActions([
                 Actions\BulkActionGroup::make([
                     Actions\DeleteBulkAction::make(),
                 ]),
